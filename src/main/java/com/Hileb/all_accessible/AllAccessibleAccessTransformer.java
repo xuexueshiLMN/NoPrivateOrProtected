@@ -10,6 +10,8 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.lang.reflect.Modifier;
 
+import static java.lang.reflect.Modifier.*;
+
 /**
  * @Project All Accessible
  * @Author Hileb
@@ -17,7 +19,6 @@ import java.lang.reflect.Modifier;
  **/
 @SuppressWarnings("unused")
 public class AllAccessibleAccessTransformer implements IClassTransformer {
-
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
         try{
@@ -25,39 +26,40 @@ public class AllAccessibleAccessTransformer implements IClassTransformer {
                 ClassReader classReader=new ClassReader(basicClass);
                 ClassNode cn=new ClassNode();
                 classReader.accept(cn,0);
-                cn.access=getTrueAccess(cn.access);
-                for(FieldNode fn:cn.fields){
-                    if (!Modifier.isInterface(cn.access)){
+                int c1=cn.access;
+                if((c1 & 0x00000200) == 0){
+                    for(FieldNode fn:cn.fields){
                         fn.access=getTrueAccess(fn.access);
                     }
-                }
-                for (MethodNode mn:cn.methods){
-                    if (!"<clinit>".equals(mn.name)){
-                        mn.access=getTrueAccess(mn.access);
+                    for (MethodNode mn:cn.methods){
+                        if (!"<clinit>".equals(mn.name)){
+                            mn.access=getTrueAccess(mn.access);
+                        }
                     }
-                }
-                ClassWriter classWriter=new ClassWriter(classReader,ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-                cn.accept(classWriter);
-                return classWriter.toByteArray();
+                    ClassWriter classWriter=new ClassWriter(classReader,ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+                    cn.accept(classWriter);
+                    return classWriter.toByteArray();
+                }else return basicClass;
             }
+            else return basicClass;
+
         }catch (Exception ignore){
             return basicClass;
         }
-        return basicClass;
     }
     public static int getTrueAccess(int mod){
         int a=mod;
-        if (Modifier.isPrivate(a)){
+        if ((a & PRIVATE) != 0){
             a&=~Opcodes.ACC_PRIVATE;
             a|=Opcodes.ACC_PUBLIC;
-        }else if (Modifier.isProtected(a)){
+        }else if ((a & PROTECTED) != 0){
             a&=~Opcodes.ACC_PROTECTED;
             a|=Opcodes.ACC_PUBLIC;
         }
-        if (Modifier.isFinal(a)){
+        if ((a & FINAL) != 0){
             a&=~Opcodes.ACC_FINAL;
         }
-        if (!Modifier.isPublic(a)){
+        if ((a & PUBLIC) == 0){
             a|=Opcodes.ACC_PUBLIC;
         }
         return a;
