@@ -22,7 +22,7 @@ public class NPOPLaunchPluginService implements ILaunchPluginService {
     }
 
     public NPOPLaunchPluginService(){
-        LOGGER.debug("If you have installed NPOP mod(modid:noprivateorprotected),you will see this.");
+        LOGGER.debug("NPOP loaded successfully.");
     }
 
     @Override
